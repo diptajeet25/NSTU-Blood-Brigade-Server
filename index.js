@@ -42,6 +42,28 @@ app.get('/donors',async(req,res)=>
     res.send(result);
 
 })
+app.get('/donor',async(req,res)=>
+{
+    const email=req.query.email;
+    const query={email:email};
+    const result=await donorCollection.findOne(query);
+    if(result)
+    {
+        res.send(result);
+    }
+   else
+   {
+    res.send({message:"No donor found"});
+   }
+})
+
+app.post('/request-blood',async(req,res)=>
+{
+  const request=req.body;
+  const result=await requestCollection.insertOne(request);
+  res.send(result);
+
+})
 
 app.post('/become-donor',async(req,res)=>
 {
