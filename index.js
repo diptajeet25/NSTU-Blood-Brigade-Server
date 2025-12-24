@@ -42,6 +42,20 @@ app.get('/donors',async(req,res)=>
     res.send(result);
 
 })
+app.get('/requests',async(req,res)=>
+{
+    const cursor=await requestCollection.find();
+    const result=await cursor.toArray();
+    res.send(result);
+
+})
+app.get('/donor/profile',async(req,res)=>
+{
+const email=req.query.email;
+const query={email:email};
+const result=await donorCollection.findOne(query);
+res.send(result);
+})
 app.get('/donor',async(req,res)=>
 {
     const email=req.query.email;
