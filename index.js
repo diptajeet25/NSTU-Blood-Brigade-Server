@@ -49,6 +49,15 @@ app.get('/requests',async(req,res)=>
     res.send(result);
 
 })
+app.get('/myRequests',async(req,res)=>
+{
+  const email=req.query.email;
+  const query={email:email};
+  const cursor=requestCollection.find(query);
+  const result=await cursor.toArray();
+  res.send(result);
+
+})
 app.get('/donor/profile',async(req,res)=>
 {
 const email=req.query.email;
@@ -85,6 +94,18 @@ app.post('/become-donor',async(req,res)=>
     const result=await donorCollection.insertOne(donor);
     res.send(result);
 
+})
+
+app.patch('/donor/profile',async(req,res)=>
+{
+    const email=req.query.email;
+    const updatedData=req.body;
+    const filter={email:email};
+    const updateDoc={
+        $set: updatedData
+    };
+    const result=await donorCollection.updateOne(filter,updateDoc);
+    res.send(result);
 })
    
     await client.db("admin").command({ ping: 1 });
