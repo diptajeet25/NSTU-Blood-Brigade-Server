@@ -32,7 +32,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     const db=client.db("bloodBrigade");
     const donorCollection=db.collection("donors");
     const requestCollection=db.collection("requests");
@@ -64,21 +64,45 @@ app.get('/', (req, res) => {
 app.get('/donors',verifyFBToken, async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 20;
-  const skip = (page - 1) * limit;
-  const totalCount = await donorCollection.countDocuments();
-  const donors = await donorCollection.find().skip(skip).limit(limit).toArray();
-  res.send({donors,totalPages: Math.ceil(totalCount / limit),currentPage: page,totalCount});
+  const bloodGroup = req.query.bloodGroup;
+  if(bloodGroup==="All" || !bloodGroup)
+  {
+    const skip = (page - 1) * limit;
+    const totalCount = await donorCollection.countDocuments();
+    const donors = await donorCollection.find().skip(skip).limit(limit).toArray();
+    return res.send({donors,totalPages: Math.ceil(totalCount / limit),currentPage: page,totalCount});
+  }
+  else
+  {
+    const query={bloodGroup:bloodGroup};
+    const skip = (page - 1) * limit;
+    console.log(query);
+    const totalCount = await donorCollection.countDocuments(query);
+    const donors = await donorCollection.find(query).skip(skip).limit(limit).toArray();
+    return res.send({donors,totalPages: Math.ceil(totalCount / limit),currentPage: page,totalCount});
+  }
+
 });
 
 app.get('/requests',verifyFBToken, async (req, res) => {
    const page = parseInt(req.query.page) || 1; 
    const limit = parseInt(req.query.limit) || 20;
-    const skip = (page - 1) * limit; 
-    const query={};
-    query.status="pending";
-    const totalCount = await requestCollection.countDocuments(query); 
-    const requests = await requestCollection.find(query).skip(skip).limit(limit).toArray(); 
-    res.send({ requests, totalPages: Math.ceil(totalCount / limit), currentPage: page, totalCount }); 
+   const bloodGroup = req.query.bloodGroup;
+   if(bloodGroup==="All" || !bloodGroup)
+   {
+    const skip = (page - 1) * limit;
+    const totalCount = await requestCollection.countDocuments({status:"pending"});
+    const requests = await requestCollection.find({status:"pending"}).skip(skip).limit(limit).toArray();
+    return res.send({ requests, totalPages: Math.ceil(totalCount / limit), currentPage: page, totalCount });
+   }
+   else
+   {
+    const query={bloodGroup:bloodGroup,status:"pending"};
+    const skip = (page - 1) * limit;
+    const totalCount = await requestCollection.countDocuments(query);
+    const requests = await requestCollection.find(query).skip(skip).limit(limit).toArray();
+    return res.send({ requests, totalPages: Math.ceil(totalCount / limit), currentPage: page, totalCount });
+   }
   });
 
 app.get('/myRequests',verifyFBToken,async(req,res)=>
@@ -200,7 +224,23 @@ app.patch('/cancelRequestStatus',verifyFBToken,async(req,res)=>
   res.send(result);
 })
    
-    await client.db("admin").command({ ping: 1 });
+app.patch("/donor/availability",verifyFBToken,async(req,res)=>
+{
+  const email=req.query.email;
+  if(req.decodedEmail!==email)
+  {
+    return res.status(403).send({message:"Forbidden access"});
+  }
+  const updatedData=req.body;
+  const filter={email:email};
+  const updateDoc={
+      $set: updatedData
+  };
+  const result=await donorCollection.updateOne(filter,updateDoc);
+  res.send(result);
+
+})
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     
